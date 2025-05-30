@@ -46,7 +46,16 @@ export async function generateShortCode(longUrl: string) {
   return shortCode;
 }
 
-const kv = await Deno.openKv();
+// Initialize KV with error handling
+let kv: Deno.Kv;
+
+try {
+  kv = await Deno.openKv();
+} catch (error) {
+  console.error("Failed to initialize Deno KV:", error);
+  console.error("Make sure to run with --unstable-kv flag");
+  throw new Error("KV initialization failed. Run with --unstable-kv flag.");
+}
 
 export async function storeShortLink(
   longUrl: string,
@@ -134,7 +143,7 @@ export async function incrementClickCount(
 
   const newClickCount = shortLinkData?.clickCount + 1;
 
-  const analyicsKey = ["analytics", shortCode, newClickCount];
+  const analyticsKey = ["analytics", shortCode, newClickCount];
   const analyticsData = {
     shortCode,
     createdAt: Date.now(),
@@ -150,7 +159,7 @@ export async function incrementClickCount(
       ...shortLinkData,
       clickCount: newClickCount,
     })
-    .set(analyicsKey, analyticsData)
+    .set(analyticsKey, analyticsData)
     .commit();
 
   if (!res.ok) {

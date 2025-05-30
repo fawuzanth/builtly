@@ -1,4 +1,4 @@
-import { Handler, type Route, route } from "jsr:@std/http";
+import { Handler, type Route, route } from "@std/http/unstable-route";
 import type { GitHubUser } from "./db.ts";
 import { getCurrentUser } from "./auth.ts";
 

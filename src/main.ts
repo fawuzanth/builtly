@@ -19,7 +19,7 @@ import {
   ShortlinkViewPage,
   UnauthorizedPage,
 } from "./ui.tsx";
-import { serveDir } from "@std/http/unstable-route";
+import { serveDir } from "jsr:@std/http/file-server";
 
 const app = new Router();
 
