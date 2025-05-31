@@ -29,19 +29,38 @@ export type ClickAnalytics = {
 // Read & Write Data with Deno KV
 
 export async function generateShortCode(longUrl: string) {
+  // Ensure URL has a protocol
+  if (!longUrl.startsWith('http://') && !longUrl.startsWith('https://')) {
+    longUrl = 'https://' + longUrl;
+  }
+  
   try {
-    new URL(longUrl);
+    const url = new URL(longUrl);
+    // Ensure the URL has a valid domain
+    if (!url.hostname || url.hostname.length < 3) {
+      throw new Error("Invalid hostname in URL");
+    }
   } catch (error) {
-    console.log(error);
-    throw new Error("Invalid URL provided");
+    console.error("URL validation error:", error);
+    throw new Error("Invalid URL provided. Please enter a valid web address.");
   }
 
   // Generate a unique identifier for the URL
-  const urlData = new TextEncoder().encode(longUrl + Date.now());
+  const timestamp = Date.now().toString();
+  const urlData = new TextEncoder().encode(longUrl + timestamp);
   const hash = await crypto.subtle.digest("SHA-256", urlData);
 
-  // Take the first 8 of the hash for the short URL
+  // Take the first 8 bytes of the hash for the short URL
   const shortCode = encodeBase64Url(hash.slice(0, 8));
+  
+  // Check if this shortCode already exists
+  const existingLink = await getShortLink(shortCode);
+  if (existingLink) {
+    // If collision occurs, add more entropy and try again
+    const newUrlData = new TextEncoder().encode(longUrl + timestamp + Math.random());
+    const newHash = await crypto.subtle.digest("SHA-256", newUrlData);
+    return encodeBase64Url(newHash.slice(0, 8));
+  }
 
   return shortCode;
 }

@@ -67,17 +67,7 @@ app.get("/links/new", (_req) => {
   });
 });
 
-app.get("/links/:id", async (_req, _info, params) => {
-  const shortCode = params.pathname.groups["id"];
-  const shortLink = await getShortLink(shortCode);
-
-  return new Response(render(ShortlinkViewPage({ shortLink })), {
-    status: 200,
-    headers: {
-      "content-type": "text/html",
-    },
-  });
-});
+// Route handler moved below with proper authentication
 
 app.get("/links", async () => {
   if (!app.currentUser) return unauthorizedResponse();
@@ -120,6 +110,15 @@ app.get("/links/:id", async (_req, _info, params) => {
 
   const shortCode = params?.pathname.groups["id"];
   const shortLink = await getShortLink(shortCode!);
+  
+  if (!shortLink) {
+    return new Response(render(NotFoundPage()), {
+      status: 404,
+      headers: {
+        "content-type": "text/html",
+      },
+    });
+  }
 
   return new Response(render(ShortlinkViewPage({ shortLink })), {
     status: 200,

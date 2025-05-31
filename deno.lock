@@ -9,6 +9,7 @@
     "jsr:@std/cli@^1.0.18": "1.0.18",
     "jsr:@std/collections@*": "1.1.0",
     "jsr:@std/crypto@*": "1.0.5",
+    "jsr:@std/crypto@^1.0.5": "1.0.5",
     "jsr:@std/datetime@0.221": "0.221.0",
     "jsr:@std/encoding@*": "1.0.10",
     "jsr:@std/encoding@0.221": "0.221.0",
@@ -162,6 +163,7 @@
   "workspace": {
     "dependencies": [
       "jsr:@std/assert@1",
+      "jsr:@std/crypto@^1.0.5",
       "jsr:@std/http@^1.0.17",
       "npm:preact@*"
     ]

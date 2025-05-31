@@ -2,7 +2,9 @@ import { createGitHubOAuthConfig, createHelpers } from "jsr:@deno/kv-oauth";
 import { pick } from "jsr:@std/collections/pick";
 import { getUser, type GitHubUser, storeUser } from "./db.ts";
 
-const oauthConfig = createGitHubOAuthConfig();
+const oauthConfig = createGitHubOAuthConfig({
+  redirectUri: Deno.env.get("REDIRECT_URL")
+});
 const {
   handleCallback,
   getSessionId,
