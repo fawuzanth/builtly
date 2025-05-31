@@ -28,42 +28,49 @@ export type ClickAnalytics = {
 
 // Read & Write Data with Deno KV
 
-export async function generateShortCode(longUrl: string) {
-  // Ensure URL has a protocol
-  if (!longUrl.startsWith('http://') && !longUrl.startsWith('https://')) {
-    longUrl = 'https://' + longUrl;
+function normalizeUrl(longUrl: string): string {
+  let url = longUrl.trim();
+  if (!/^https?:\/\//i.test(url)) {
+    url = "https://" + url;
   }
-  
+  return url;
+}
+
+function isValidUrl(url: string): boolean {
   try {
-    const url = new URL(longUrl);
-    // Ensure the URL has a valid domain
-    if (!url.hostname || url.hostname.length < 3) {
-      throw new Error("Invalid hostname in URL");
-    }
-  } catch (error) {
-    console.error("URL validation error:", error);
+    const parsed = new URL(url);
+    return !!parsed.hostname && parsed.hostname.length > 2;
+  } catch {
+    return false;
+  }
+}
+
+function randomShortCode(length = 7): string {
+  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "";
+  for (let i = 0; i < length; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+export async function generateShortCode(longUrl: string): Promise<string> {
+  const normalizedUrl = normalizeUrl(longUrl);
+  if (!isValidUrl(normalizedUrl)) {
     throw new Error("Invalid URL provided. Please enter a valid web address.");
   }
 
-  // Generate a unique identifier for the URL
-  const timestamp = Date.now().toString();
-  const urlData = new TextEncoder().encode(longUrl + timestamp);
-  const hash = await crypto.subtle.digest("SHA-256", urlData);
-
-  // Take the first 8 bytes of the hash for the short URL
-  const shortCode = encodeBase64Url(hash.slice(0, 8));
-  
-  // Check if this shortCode already exists
-  const existingLink = await getShortLink(shortCode);
-  if (existingLink) {
-    // If collision occurs, add more entropy and try again
-    const newUrlData = new TextEncoder().encode(longUrl + timestamp + Math.random());
-    const newHash = await crypto.subtle.digest("SHA-256", newUrlData);
-    return encodeBase64Url(newHash.slice(0, 8));
+  // Try up to 5 times to avoid rare collision
+  for (let i = 0; i < 5; i++) {
+    const shortCode = randomShortCode();
+    const exists = await getShortLink(shortCode);
+    if (!exists) {
+      return shortCode;
+    }
   }
-
-  return shortCode;
+  throw new Error("Could not generate a unique short code. Please try again.");
 }
+
 
 // Initialize KV with error handling
 let kv: Deno.Kv;
